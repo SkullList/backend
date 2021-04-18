@@ -41,6 +41,8 @@ export default new Schema({
     }
   },
   details: {
+    prefix: String,
+    library: String,
     summary: {
       required: true,
       minlength: [5, 'Minimum length of Bot summary is 3'],
@@ -48,6 +50,10 @@ export default new Schema({
       type: String
     },
     detailedDescription: {
+      default: null,
+      type: String
+    },
+    customURL: {
       default: null,
       type: String
     },
@@ -59,6 +65,10 @@ export default new Schema({
           type: String
         }
       ]
+    },
+    tags: {
+      default: [],
+      type: [String]
     },
     approvedBy: {
       default: null,

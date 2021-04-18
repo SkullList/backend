@@ -5,11 +5,9 @@ const router = Router()
 
 // IN-DEV
 
-export default function userModule (userModel) {
+export default function userModule (UserModel) {
   router.get('/:id', (req, res) => {
-    const { id } = req.params
-    console.log(id)
-    res.send(id)
+    res.send('indev')
   })
 
   return router

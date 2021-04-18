@@ -3,7 +3,11 @@
     "version": "1.0.0",
     "description": "Backend pra Botlist SkullList",
     "main": "index.js",
-    "author": "KuryKat",
+    "author": {
+        "name": "KuryKat",
+        "email": "contactkurykat@gmail.com",
+        "url": "https://github.com/kurykat"
+    },
     "license": "GPL-3.0",
     "type": "module",
     "scripts": {

@@ -26,10 +26,10 @@ async function getUser (id) {
   if (user === undefined) {
     try {
       user = (await api.get(`/users/${id}`)).data
+      cache.set(id, user, 3600)
     } catch (error) {
       return undefined
     }
-    cache.set(id, user, 3600)
   }
   return user
 }

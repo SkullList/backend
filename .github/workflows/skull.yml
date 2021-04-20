@@ -9,7 +9,7 @@ on:
       - master
 
 jobs:
-  [Skull List Backend]:
+  SkullList-Backend:
     runs-on: ${{ matrix.os }}
 
     strategy:

@@ -1,57 +1,24 @@
 import express from 'express'
 import { getUser } from '../discord/discord.module.js'
 import httpError from 'http-errors'
+import verifyData from '../utils/verifyData.js'
 const { Router } = express
 
 const router = Router()
 
 // IN-DEV
-// VERIFICAR DADOS PASSADOS PELO USUÁRIO, COMO O LIBRARY E/OU OUTROS!
 
 export default function botModule (BotModel) {
-  function verifyBot (bot) {
-    const updatedBot = {}
-    if (bot.anotherOwners === undefined) {
-      updatedBot.anotherOwners = []
-    }
-
-    if (bot.detailedDescription === undefined) {
-      updatedBot.detailedDescription = null
-    }
-
-    if (bot.customURL === undefined) {
-      updatedBot.customURL = null
-    }
-
-    if (bot.id === undefined) {
-      throw new Error('ID can not be undefined!')
-    } else if (bot.owner === undefined) {
-      throw new Error('Owner can not be undefined!')
-    } else if (bot.prefix === undefined) {
-      throw new Error('Prefix can not be undefined!')
-    } else if (bot.summary === undefined) {
-      throw new Error('Summary can not be undefined!')
-    } else if (bot.tags === undefined) {
-      throw new Error('Tags can not be undefined!')
-    } else if (bot.library === undefined) {
-      throw new Error('Library can not be undefined!')
-    }
-    return { ...bot, ...updatedBot }
-  }
-
   router.post('/', async (req, res, next) => {
     try {
       const botBody = req.body
-      const { id, username, discriminator, avatar, bot } = await getUser(botBody.id, true)
-      if (!bot) {
-        throw new Error('User sent was not a Bot')
-      }
-      const { owner, prefix, library, summary, detailedDescription, customURL, anotherOwners, tags } = verifyBot(botBody)
-      const finalBot = { id, username, discriminator, avatar, owner, details: { prefix, library, summary, detailedDescription, customURL, anotherOwners, tags } }
-      // const createdBot = new BotModel(finalBot)
+      const { id, username, discriminator, avatar } = await getUser(botBody.id)
+      const { owner, prefix, library, summary, detailedDescription, customURL, anotherOwners, tags } = await verifyData(botBody, BotModel)
+      const finalBot = { _id: id, username, discriminator, avatar, owner, details: { prefix, library, summary, detailedDescription, customURL, anotherOwners, tags } }
+      const createdBot = new BotModel(finalBot)
+      await createdBot.save()
 
-      // res.send(createdBot)
-      res.send(finalBot)
+      res.status(200).end()
     } catch (error) {
       const badRequest = httpError(400)
       badRequest.message = `${badRequest.message} - ${error.message}`

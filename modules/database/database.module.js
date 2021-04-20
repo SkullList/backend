@@ -11,6 +11,12 @@ connect(config.database.uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useFindAndModify: false
+}, (err) => {
+  if (err) {
+    console.error(err)
+  }
+
+  console.log('Successfully connected to MongoDB!')
 })
 
 const BotModel = model('bots', botSchema)

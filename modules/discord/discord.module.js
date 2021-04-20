@@ -3,7 +3,6 @@ import { join } from 'path'
 import NodeCache from 'node-cache'
 import { readFileSync } from 'fs'
 import moment from 'moment'
-import { Client } from 'discord.js'
 import _ from 'lodash'
 moment.locale('pt-br')
 
@@ -22,15 +21,13 @@ const api = Axios.create({
   }
 })
 
-async function getUser (id, moreInfo) {
+async function getUser (id) {
   let user = cache.get(id)
   if (user === undefined) {
-    if (moreInfo) {
-      const client = new Client()
-      client.login(discord.bot.token)
-      user = await client.users.fetch(id)
-    } else {
+    try {
       user = (await api.get(`/users/${id}`)).data
+    } catch (error) {
+      return undefined
     }
     cache.set(id, user, 3600)
   }

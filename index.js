@@ -24,4 +24,4 @@ app.use((err, req, res, next) => {
   })
 })
 
-app.listen(config.port, console.log('listen on port ' + config.port))
+app.listen(config.port, console.log('Listening on port ' + config.port))

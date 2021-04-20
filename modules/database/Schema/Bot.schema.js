@@ -45,7 +45,7 @@ export default new Schema({
     library: String,
     summary: {
       required: true,
-      minlength: [5, 'Minimum length of Bot summary is 3'],
+      minlength: [3, 'Minimum length of Bot summary is 3'],
       maxlength: [100, 'Maximum length of Bot summary is 100'],
       type: String
     },

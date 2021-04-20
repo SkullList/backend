@@ -9,7 +9,7 @@ on:
       - master
 
 jobs:
-  honoka:
+  [Skull List Backend]:
     runs-on: ${{ matrix.os }}
 
     strategy:

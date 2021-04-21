@@ -2,6 +2,7 @@ import express from 'express'
 import { getUser } from '../discord/discord.module.js'
 import httpError from 'http-errors'
 import verifyData from '../utils/verifyData.js'
+import { Bot } from './bot.object.js'
 const { Router } = express
 
 const router = Router()
@@ -26,94 +27,111 @@ export default function botModule (BotModel) {
     }
   })
 
-  router.get('/', async (req, res) => {
-    const params = {
-      $and: [
-        {
-          'details.approvedBy': {
-            $ne: null
-          }
-        }
-      ]
-    }
-    let sortBy = {}
-    const { search, sort, tags } = req.query
-    let { page } = req.query
-    const pageLimit = 20
-    if (page === undefined) {
-      page = 1
-    }
-
-    if (search !== undefined) {
-      if (search.length > 0) {
-        const regex = { $regex: search, $options: 'i' }
-        params.$or = [
+  router.get('/', async (req, res, next) => {
+    try {
+      const params = {
+        $and: [
           {
-            username: regex
-          },
-          {
-            'details.summary': regex
+            'details.approvedBy': {
+              $ne: null
+            }
           }
         ]
       }
-    }
-
-    if (sort !== undefined) {
-      if (sort === 'recent') {
-        sortBy = { 'dates.sentAt': -1 }
-      } else if (sort === 'mostVoted') {
-        sortBy = { 'details.votes.amount': -1 }
+      let sortBy = {}
+      const { search, sort, tags } = req.query
+      let { page } = req.query
+      const pageLimit = 20
+      if (page === undefined) {
+        page = 1
       }
-    }
 
-    if (tags !== undefined) {
-      params.$and = [
-        {
-          'details.tags': {
-            $all: tags
-          }
+      if (search !== undefined) {
+        if (search.length > 0) {
+          const regex = { $regex: search, $options: 'i' }
+          params.$or = [
+            {
+              username: regex
+            },
+            {
+              'details.summary': regex
+            }
+          ]
         }
-      ]
+      }
+
+      if (sort !== undefined) {
+        if (sort === 'recent') {
+          sortBy = { 'dates.sentAt': -1 }
+        } else if (sort === 'mostVoted') {
+          sortBy = { 'details.votes.amount': -1 }
+        }
+      }
+
+      if (tags !== undefined) {
+        params.$and = [
+          {
+            'details.tags': {
+              $all: tags
+            }
+          }
+        ]
+      }
+
+      const botsFound = await BotModel
+        .find(params)
+        .sort(sortBy)
+        .limit(pageLimit)
+        .skip((page - 1) * pageLimit)
+        .exec()
+
+      const bots = []
+
+      for (const bot of botsFound) {
+        bots.push(new Bot(bot))
+      }
+      res.send(bots)
+    } catch (error) {
+      const badRequest = httpError(400)
+      badRequest.message = `${badRequest.message} - ${error.message}`
+      next(badRequest)
     }
-
-    const bots = await BotModel
-      .find(params)
-      .sort(sortBy)
-      .limit(pageLimit)
-      .skip((page - 1) * pageLimit)
-      .exec()
-
-    res.send(bots)
   })
 
-  router.get('/:id', async (req, res) => {
-    const { id } = req.params
-    const { showOwner } = req.query
-    let search = BotModel.findOne({
-      $or: [
-        {
-          _id: id
-        },
-        {
-          'details.customURL': id
+  router.get('/:id', async (req, res, next) => {
+    try {
+      const { id } = req.params
+      const { showOwner } = req.query
+      let search = BotModel.findOne({
+        $or: [
+          {
+            _id: id
+          },
+          {
+            'details.customURL': id
+          }
+        ]
+      })
+
+      if (showOwner !== undefined) {
+        if (showOwner) {
+          search = search
+            .populate('owner')
+            .populate('details.anotherOwners')
         }
-      ]
-    })
-
-    if (showOwner !== undefined) {
-      if (showOwner) {
-        search = search
-          .populate('owner')
-          .populate('details.anotherOwners')
       }
-    }
 
-    const bot = await search.exec()
-    if (bot === null) {
-      return
-    }
+      const bot = await search.exec()
+      if (bot === null) {
+        throw new Error('The bot was not found')
+      }
 
-    res.send(bot)
+      res.send(bot)
+    } catch (error) {
+      const badRequest = httpError(400)
+      badRequest.message = `${badRequest.message} - ${error.message}`
+      next(badRequest)
+    }
   })
 
   return router
